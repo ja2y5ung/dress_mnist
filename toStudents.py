@@ -115,39 +115,64 @@ def feat1(trainSet, testSet):
             testSetf[j + (i*teS2)] = np.array([imsi2[0],imsi2[1],imsi3[0,0],imsi3[0,1],imsi3[1,1]])
     return trainSetf, testSetf
 
-def feat2(trainSet, testSet, dX):
-    size = trainSet[0].shape[0]; s = size - dX+1
+def feat2(trainSet, mask_size, dx):
+    input_size = trainSet[0].shape[0]
+    stride = dx
+    padding = 0
+
+    output = int((input_size - mask_size + 2*padding)/stride + 1)
+
+    mask = np.ones((mask_size,mask_size))
+    mask = mask * (1/(mask_size)**2)
     
-    trS1 = 10; trS2 = trainNum // 10
-    teS1 = 10; teS2 = testNum  // 10
-    
-    trainImsi = np.zeros((trS1 * trS2, s, s)); testImsi = np.zeros((teS1 * teS2, s,s))
-    trainSetf = np.zeros((trS1 * trS2, s*s)); testSetf = np.zeros((teS1 * teS2, s*s))
+    result = np.zeros((output,output))
 
-    for i in range(10):
-        for j in range(trainNum): # 600
-            imsi = trainSet[j+(i*trS2)]
-            for ii in range(s):
-                for jj in range(s):
-                    trainImsi[i*(trS2+j), ii, jj] = imsi[ii:dX+ii , jj:dX+jj].sum()
-            trainSetf[j+(i*trS2),:] = trainImsi[j+(i*trS2), :].flatten()
+    for i in range(output):
+        for j in range(output):
+            result[i,j] = np.sum(trainSet[0][dx*i:dx*i+mask_size,dx*j:dx*j+mask_size] * mask)
+            
+    plt.imshow(result); plt.show()
 
-    for i in range(10):
-        for j in rangee(testNum):
-            imsi = testSet[j+(i*teS2)]
-            for ii in range(s):
-                for jj in range(s):
-                    testImsi[i*teS2+j, ii, jj] = imsi[ii:dX+ii,jj:dX+jj].sum()
-            testSetf[i*teS2+j,:] = testImsi[i*teS2+j, ::].flatten()
+    return result
 
-    return trainSetf, testSetf
+  
+
+##def feat4(trainSet, testSet, dX):
+##    size = trainSet[0].shape[0]; s = size - dX+1
+##    
+##    trS1 = 10; trS2 = trainNum // 10
+##    teS1 = 10; teS2 = testNum  // 10
+##    
+##    trainImsi = np.zeros((trS1 * trS2, s, s)); testImsi = np.zeros((teS1 * teS2, s,s))
+##    trainSetf = np.zeros((trS1 * trS2, s*s)); testSetf = np.zeros((teS1 * teS2, s*s))
+##
+##    print(trainSetf.shape)
+##    print(testSetf.shape)
+##
+##    print(trainImsi.shape)
+##    print(testImsi.shape)
+##
+##    for i in range(10):
+##        for j in range(trainNum): # 600
+##            imsi = trainSet[j+(i*trS2)]
+##            for ii in range(s):
+##                for jj in range(s):
+##                    trainImsi[i*(trS2+j), ii, jj] = imsi[ii:dX+ii , jj:dX+jj].sum()
+##            trainSetf[j+(i*trS2),:] = trainImsi[j+(i*trS2), :].flatten()
+##
+##    for i in range(10):
+##        for j in rangee(testNum):
+##            imsi = testSet[j+(i*teS2)]
+##            for ii in range(s):
+##                for jj in range(s):
+##                    testImsi[i*teS2+j, ii, jj] = imsi[ii:dX+ii,jj:dX+jj].sum()
+##            testSetf[i*teS2+j,:] = testImsi[i*teS2+j, ::].flatten()
+##
+##    return trainSetf, testSetf
 ################################## main ################################
 
 x_train, y_train, x_test, y_test = init_data()
 x_train2, y_train2, x_test2, y_test2 = data_ready(x_train, y_train, x_test, y_test)
-trainSetf, testSetf = feat2(x_train2, x_test2,10)
-result = knn(trainSetf, testSetf, 10)
-
-
+result = feat2(x_train2,10,1)
 
 
