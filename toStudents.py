@@ -45,31 +45,41 @@ def createTmpl(trainSet):
     return tmpl
 
 def tmplMatch(tmpl, testSet):
-    result = np.zeros((testNum,10))
+    result = np.zeros((testNum//10,10)) #100 x 10
+    for i in range(10): # 10
+        for j in range(testNum//10): # 1000
+            imsiTest = np.tile(testSet[j+i*(testNum//10)], (1,10))
 
-    for i in range(10):
-        for j in range(testNum//10):
-            imsiTest = np.tile(testSet[i][j], (1,10))
-            error = np.abs(tmpl - imsiTest)
+            error = np.abs(tmpl - imsiTest) #6000x28x28
             errorSum = [error[:,0:28].sum(), error[:,28:56].sum(),\
                         error[:,56:84].sum(), error[:,84:112].sum(),\
                         error[:,112:140].sum(), error[:,140:168].sum(),\
                         error[:,168:196].sum(), error[:,196:224].sum(),\
                         error[:,224:252].sum(), error[:,252:280].sum(),]
-
             result[j,i] = np.argmin(errorSum)
     return result
 
+def knn(trainSet, testSet, k): 
+    trS1,trS2 = trainSet.shape 
+    teS1,teS2 = testSet.shape
+
+    trS3 = int(trS1/10) 
+    teS3 = int(teS1/10)
+
+    label = np.tile(np.arange(0,10), (teS3,1)) 
+    result = np.zeros((teS3,10))
+
+    for i in range(teS1): 
+        imsi = np.sum((trainSet - testSet[i,:])**2,axis=1) 
+        no = np.argsort(imsi)[0:k] 
+        hist, bins = np.histogram(no//trS3, np.arange(-0.5,10.5,1))
+        result[i%teS3, i//teS3] = np.argmax(hist) 
+    return result
 ################################## main ################################
 
 x_train, y_train, x_test, y_test = init_data()
 x_train2, y_train2, x_test2, y_test2 = data_ready(x_train, y_train, x_test, y_test)
-
-tmpl = createTmpl(x_train2)
-##result = tmplMatch(tmpl,x_test2)
-
-plt.imshow(tmpl); plt.show()
-
+result = knn(x_train2,x_test2, 10)
 
 
 
