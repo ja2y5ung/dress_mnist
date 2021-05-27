@@ -75,11 +75,11 @@ def tmplMatch(tmpl, testSet):
     return result
 
 def knn(trainSet, testSet, k): 
-    trS1,trS2 = trainSet.shape 
-    teS1,teS2 = testSet.shape
+    trS1,trS2 = trainSet.shape # 6000, 784
+    teS1,teS2 = testSet.shape # 1000, 784
 
-    trS3 = int(trS1/10) 
-    teS3 = int(teS1/10)
+    trS3 = int(trS1/10) # 600
+    teS3 = int(teS1/10) # 100
 
     label = np.tile(np.arange(0,10), (teS3,1)) 
     result = np.zeros((teS3,10))
