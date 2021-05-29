@@ -150,21 +150,32 @@ def feat2(trainSet,testSet, mask_size, dx):
 
 def pca(trainSetf, testSetf, k):
     cov_mat = np.cov(trainSetf.T) #784 x 784 
-    u, s, v = np.linalg.svd(cov_mat)
+    eigen_vec, eigen_val, v = np.linalg.svd(cov_mat) #u 고유벡터 #s 고유값 
 
-    z = (u[:k,:] @ trainSetf.T).T
-    cov_z = np.cov(z.T)
-    plt.plot(np.diag(cov_z))
+    z = eigen_vec.T[:k] @ trainSetf.T
+    print(z.shape)
+    
+    x1 = z[0,0:600]
+    y1 = z[1,0:600]
+
+    x2 = z[0,600:1200]
+    y2 = z[1,600:1200]
+
+
+    plt.scatter(x1,y1,c="g")
+    plt.scatter(x2,y2,c="r")
     plt.show()
-    print(cov_z.shape)
-    print(cov_z)
+    
+    cov_z = np.cov(z)
+    
+    
 
 ################################## main ################################
 
 x_train, y_train, x_test, y_test = init_data()
 x_train2, y_train2, x_test2, y_test2 = data_ready(x_train, y_train, x_test, y_test)
 trainSetf, testSetf = data_ready_knn(x_train2, x_test2)
-pca(trainSetf, testSetf, 3)
+pca(trainSetf, testSetf, 2)
 
 
 
