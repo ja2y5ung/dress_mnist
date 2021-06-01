@@ -152,30 +152,20 @@ def pca(trainSetf, testSetf, k):
     cov_mat = np.cov(trainSetf.T) #784 x 784 
     eigen_vec, eigen_val, v = np.linalg.svd(cov_mat) #u 고유벡터 #s 고유값 
 
-    z = eigen_vec.T[:k] @ trainSetf.T
-    print(z.shape)
-    
-    x1 = z[0,0:600]
-    y1 = z[1,0:600]
+    train_z = (eigen_vec.T[:k] @ trainSetf.T).T #2 x 784 @ 784 x 6000
+    test_z = (eigen_vec.T[:k] @ testSetf.T).T   #2 x 784 @ 784 x 1000
 
-    x2 = z[0,600:1200]
-    y2 = z[1,600:1200]
+    return train_z, test_z
 
-
-    plt.scatter(x1,y1,c="g")
-    plt.scatter(x2,y2,c="r")
-    plt.show()
-    
-    cov_z = np.cov(z)
-    
-    
-
+def lda(trainSetf, testSetf, k):
+    pass
 ################################## main ################################
 
 x_train, y_train, x_test, y_test = init_data()
 x_train2, y_train2, x_test2, y_test2 = data_ready(x_train, y_train, x_test, y_test)
-trainSetf, testSetf = data_ready_knn(x_train2, x_test2)
-pca(trainSetf, testSetf, 2)
-
+##trainSetf, testSetf = data_ready_knn(x_train2, x_test2)
+trainSetf2, testSetf2 = feat2(x_train2, x_test2,3,1)
+trainSetf3, testSetf3 = pca(trainSetf2, testSetf2, 200)
+result = knn(trainSetf3, testSetf3, 10)
 
 
