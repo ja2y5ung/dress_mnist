@@ -1,5 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sns
 
 trainNum = 6000
 testNum = 1000
@@ -91,6 +93,44 @@ def knn(trainSet, testSet, k):
         result[i%teS3, i//teS3] = np.argmax(hist) 
     return result
 
+def calcMat(result):
+    label = np.tile(np.arange(0,10),(100,1))
+    bound = np.arange(-0.5, 10.5, 1)
+    cMat = np.zeros((10,10))
+
+    for i in range(10):
+        hist, bins = np.histogram(result[:,i], bound)
+        cMat[i,:] = hist
+
+    cm = pd.DataFrame(cMat, index = [i for i in range(1,11)],\
+                      columns = [i for i in range(1,11)])
+    
+    sns.heatmap(cm, annot = True)
+    plt.show()
+
+
+def calcMeasure(result):
+
+    label = np.tile(np.arange(0,10), (testNum//10,1))
+    conf_mat = np.zeros((10,10))
+    TP = []; TN = []; FN = []; FP = []
+    for i in range(10):
+        TP.append(((result == label) & (label == i)).sum())
+        TN.append(((result != i) & (label != i)).sum())
+        FP.append(((result != label) & (label == i)).sum())
+        FN.append(((result == i) & (label != i)).sum())
+
+        conf_mat[i,i] = ((result == label) & (label == i)).sum()
+    
+
+    TP = np.array(TP); TN = np.array(TN); FP = np.array(FP); FN = np.array(FN);
+    acc = (TP + TN)/(TP + TN + FP + FN)
+    pre = TP/(TP + FP)
+    rec = TP/(TP + FN)
+    f1 = 2*pre*rec/(pre+rec)
+
+    return acc, pre, rec, f1
+
 def feat1(trainSet, testSet):
     trS1 = 10; trS2 = trainNum // 10 #600
     teS1 = 10; teS2 = testNum // 10 #100
@@ -144,7 +184,6 @@ def feat2(trainSet,testSet, mask_size, dx):
             for j in range(output):
                 te_result[i,j] = np.sum(testSet[k][dx*i:dx*i+mask_size,dx*j:dx*j+mask_size] * mask)
                 testSetf[k,:] = te_result.flatten()
-##    plt.imshow(trainSetf); plt.show()
 
     return trainSetf, testSetf
 
@@ -158,14 +197,21 @@ def pca(trainSetf, testSetf, k):
     return train_z, test_z
 
 def lda(trainSetf, testSetf, k):
-    pass
+    print(trainSetf.shape)
+    print(testSetf.shape)
+
+
+
 ################################## main ################################
 
 x_train, y_train, x_test, y_test = init_data()
 x_train2, y_train2, x_test2, y_test2 = data_ready(x_train, y_train, x_test, y_test)
-##trainSetf, testSetf = data_ready_knn(x_train2, x_test2)
-trainSetf2, testSetf2 = feat2(x_train2, x_test2,3,1)
-trainSetf3, testSetf3 = pca(trainSetf2, testSetf2, 200)
-result = knn(trainSetf3, testSetf3, 10)
+trainSet, testSet = data_ready_knn(x_train2, x_test2)
+##trainSetf, testSetf = feat2(x_train2, x_test2,3,1)
+result = knn(trainSet, testSet, 3)
+cmat = calcMat(result)
+
+##lda(trainSet, testSet, 10)
+
 
 
