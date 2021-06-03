@@ -128,7 +128,7 @@ def calcMeasure(result):
     pre = TP/(TP + FP)
     rec = TP/(TP + FN)
     f1 = 2*pre*rec/(pre+rec)
-    recog_rate = TP/(TP+FP+FN+TN)
+    recog_rate = TP/100
     
 
     return recog_rate
