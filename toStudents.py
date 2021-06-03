@@ -128,8 +128,10 @@ def calcMeasure(result):
     pre = TP/(TP + FP)
     rec = TP/(TP + FN)
     f1 = 2*pre*rec/(pre+rec)
+    recog_rate = TP/(TP+FP+FN+TN)
+    
 
-    return acc, pre, rec, f1
+    return recog_rate
 
 def feat1(trainSet, testSet):
     trS1 = 10; trS2 = trainNum // 10 #600
@@ -209,6 +211,7 @@ x_train2, y_train2, x_test2, y_test2 = data_ready(x_train, y_train, x_test, y_te
 trainSet, testSet = data_ready_knn(x_train2, x_test2)
 ##trainSetf, testSetf = feat2(x_train2, x_test2,3,1)
 result = knn(trainSet, testSet, 3)
+recog_rate = calcMeasure(result)
 cmat = calcMat(result)
 
 ##lda(trainSet, testSet, 10)
