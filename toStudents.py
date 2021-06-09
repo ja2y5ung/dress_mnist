@@ -199,22 +199,59 @@ def pca(trainSetf, testSetf, k):
     return train_z, test_z
 
 def lda(trainSetf, testSetf, k):
-    print(trainSetf.shape)
-    print(testSetf.shape)
+    trS1, trS2 = trainSetf.shape; trS3 = int(trS1/10)
+    covMat = np.zeros((10, trS2, trS2))
+    meanV = np.zeros((10, trS2))
 
+    for i in range(10):
+        covMat[i,::] = np.cov(trainSetf[i*trS3:(i+1)*trS3,:].T)
+        meanV[i,:] = np.mean(trainSetf[i*trS3:(i+1)*trS3,:],0)
+  
+    meanC = np.mean(meanV,0)
+    Sb = (meanV-meanC).T.dot(meanV-meanC)
+    Sw = covMat.sum(0)
+    imsi = np.linalg.pinv(Sw).dot(Sb)
 
+    eigen_vec, eigen_val, v = np.linalg.svd(imsi) #u 고유벡터 #s 고유값 
+
+    train_z = (eigen_vec.T[:k] @ trainSetf.T).T #2 x 784 @ 784 x 6000
+    test_z = (eigen_vec.T[:k] @ testSetf.T).T   #2 x 784 @ 784 x 1000
+
+    return train_z, test_z
+
+def nBayes(trainSet, testSet, case):
+    trS1, trS2 = trainSet.shape; trS3 = int(trS1/10)
+    teS1, teS2 = testSet.shape; teS3 = int(teS1/10)
+    result = np.zeros((teS3,10)); meanV = np.zeros((10, trS2))
+    covC = np.zeros((10,trS2,trS2)); g = np.zeros((10))
+
+    for i in range(10):
+        meanV[i,:] = np.mean(trainSet[i*trS3:(i+1)*trS3,:], axis = 0)
+        covC[i,::] = np.cov(trainSet[i*trS3:(i+1)*trS3,:].T)
+
+    if case == 3:
+        covC = np.tile(np.mean(covC, axis = 0), (10,1,1))
+    if case == 4:
+        for i in range(10):
+            covC[i,::] = np.diag(np.diag(covC[i,:]))
+
+    for i in range(teS1):
+        for j in range(10):
+            g[i] = -0.5*(testSet[i,:] - meanV[j,:]).dot(np.linalg.inv(covC[j,::])).dot(\
+                (testSet[i,:]-meanV[j,:]).T) - 0.5*np.log(np.diag(covC[j,::]).sum())
+        result[i % teS3, i//teS3] = np.argmax(g)
+
+    return result
 
 ################################## main ################################
 
 x_train, y_train, x_test, y_test = init_data()
 x_train2, y_train2, x_test2, y_test2 = data_ready(x_train, y_train, x_test, y_test)
-trainSet, testSet = data_ready_knn(x_train2, x_test2)
-##trainSetf, testSetf = feat2(x_train2, x_test2,3,1)
-result = knn(trainSet, testSet, 3)
+trainSetf, testSetf = feat2(x_train2, x_test2,3,1)
+trainSetf2, testSetf2 = lda(trainSetf, testSetf, 3)
+result = knn(trainSetf2, testSetf2, 3)
 recog_rate = calcMeasure(result)
-cmat = calcMat(result)
-
-##lda(trainSet, testSet, 10)
+##cmat = calcMat(result)
 
 
 
