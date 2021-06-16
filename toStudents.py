@@ -1,4 +1,5 @@
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import plot_confusion_matrix
 from sklearn.metrics import confusion_matrix
 from sklearn.decomposition import PCA
@@ -233,11 +234,9 @@ def lda(trainSetf, testSetf, k):
 def nBayes(trainSet, testSet, case):
     trS1, trS2 = trainSet.shape; trS3 = int(trS1/10)
     teS1, teS2 = testSet.shape; teS3 = int(teS1/10)
+    
     result = np.zeros((teS3,10)); meanV = np.zeros((10, trS2))
     covC = np.zeros((10,trS2,trS2)); g = np.zeros((10))
-
-    print(covC.shape)
-    print(meanV.shape)
 
     for i in range(10):
         meanV[i,:] = np.mean(trainSet[i*trS3:(i+1)*trS3,:], axis = 0)
@@ -251,14 +250,15 @@ def nBayes(trainSet, testSet, case):
 
     for i in range(teS1):
         for j in range(10):
-            g[i] = -0.5*(testSet[i,:] - meanV[j,:]).dot(np.linalg.pinv(covC[j,::])).dot(\
+            print(i*10+j)
+            g[j] = -0.5*(testSet[i,:] - meanV[j,:]).dot(np.linalg.pinv(covC[j,::])).dot(\
                 (testSet[i,:]-meanV[j,:]).T) - 0.5*np.log(np.diag(covC[j,::]).sum())
         result[i % teS3, i//teS3] = np.argmax(g)
 
     return result
 
 def sklearn_knn(x_train, y_train,x_test, y_test):
-    knn = KNeighborsClassifTier(n_neighbors=5, n_jobs=-1)
+    knn = KNeighborsClassifier(n_neighbors=5, n_jobs=-1)
     knn.fit(x_train, y_train)
 
     pred = knn.predict(testSet)
@@ -271,6 +271,19 @@ def sklearn_knn(x_train, y_train,x_test, y_test):
 
     return rec_rate
 
+def sklearn_bayes(x_train, y_train, x_test, y_test):
+    gnb = GaussianNB()
+
+    gnb.fit(x_train, y_train)
+    
+    pred = gnb.predict(testSet)
+
+    plot_confusion_matrix(gnb, testSet, y_test)
+    cm = confusion_matrix(y_test, pred)
+    rec_rate = np.diag(cm)/100
+    plt.show()
+    
+    return rec_rate
 
 ################################## main ################################
 
@@ -278,10 +291,9 @@ x_train, y_train, x_test, y_test = init_data()
 x_train2, y_train2, x_test2, y_test2 = data_ready(x_train, y_train, x_test, y_test)
 trainSet, testSet = data_ready_knn(x_train2, x_test2)
 
-trainSetf, testSetf = pca(trainSet, testSet, 300)
-result = knn(trainSetf, testSetf, 5)
+result = nBayes(trainSet, testSet, 1)
 
-
+##rate = bayes_rate = sklearn_bayes(trainSet, y_train2.ravel(), testSet, y_test2.ravel())
 ##knn_rate = knn_rate = sklearn_knn(trainSet, y_train2.ravel(), testSet, y_test2.ravel())
 
 
