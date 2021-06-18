@@ -7,6 +7,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
+from sklearn import neighbors, datasets
+from matplotlib.colors import ListedColormap
 
 trainNum = 6000
 testNum = 1000
@@ -98,6 +100,26 @@ def knn(trainSet, testSet, k):
         result[i%teS3, i//teS3] = np.argmax(hist) 
     return result
 
+def knn2(trainSet, testSet, k):
+
+    # 3D
+    cov_mat = np.cov(trainSet.T) #784 x 784 
+    eigen_vec, eigen_val, v = np.linalg.svd(cov_mat) #u 고유벡터 #s 고유값 
+
+    train_z = (eigen_vec.T[:3] @ trainSet.T).T #2 x 784 @ 784 x 6000
+    test_z = (eigen_vec.T[:3] @ testSet.T).T   #2 x 784 @ 784 x 1000
+
+    fig = plt.figure()
+    ax = fig.add_subplot(projection='3d')
+
+    for i in range(10):
+        ax.scatter(train_z[i * (trainNum//10) : (i+1) * (trainNum//10) ,0],\
+                    train_z[i * (trainNum//10) : (i+1) * (trainNum//10) ,1],\
+                    train_z[i * (trainNum//10) : (i+1) * (trainNum//10) ,2],)
+    plt.show()
+
+
+
 def calcMat(result):
     label = np.tile(np.arange(0,10),(100,1))
     bound = np.arange(-0.5, 10.5, 1)
@@ -170,9 +192,10 @@ def feat2(trainSet,testSet, mask_size, dx):
 
     output = int((input_size - mask_size + 2*padding)/stride + 1)
 
+    #mask1
     mask = np.ones((mask_size,mask_size))
-    mask = mask * (1/(mask_size)**2)
-    
+    mask = mask1 * (1/(mask_size)**2)
+
     tr_result = np.zeros((output,output))
     te_result = np.zeros((output,output))
     
@@ -232,11 +255,21 @@ def lda(trainSetf, testSetf, k):
     return train_z, test_z
 
 def nBayes(trainSet, testSet, case):
-    trS1, trS2 = trainSet.shape; trS3 = int(trS1/10)
-    teS1, teS2 = testSet.shape; teS3 = int(teS1/10)
+
+    trS1,trS2 = trainSet.shape # 6000, 784
+    teS1,teS2 = testSet.shape # 1000, 784
+
+    trS3 = int(trS1/10) # 600
+    teS3 = int(teS1/10) # 100
+
+
     
-    result = np.zeros((teS3,10)); meanV = np.zeros((10, trS2))
-    covC = np.zeros((10,trS2,trS2)); g = np.zeros((10))
+    result = np.zeros((teS3,10))
+    meanV = np.zeros((10, trS2))
+    covC = np.zeros((10,trS2,trS2))
+    g = np.zeros((10))
+
+
 
     for i in range(10):
         meanV[i,:] = np.mean(trainSet[i*trS3:(i+1)*trS3,:], axis = 0)
@@ -248,7 +281,7 @@ def nBayes(trainSet, testSet, case):
         for i in range(10):
             covC[i,::] = np.diag(np.diag(covC[i,:]))
 
-    for i in range(teS1):
+    for i in range(teS3):
         for j in range(10):
             print(i*10+j)
             g[j] = -0.5*(testSet[i,:] - meanV[j,:]).dot(np.linalg.pinv(covC[j,::])).dot(\
@@ -289,17 +322,16 @@ def sklearn_bayes(x_train, y_train, x_test, y_test):
 
 x_train, y_train, x_test, y_test = init_data()
 x_train2, y_train2, x_test2, y_test2 = data_ready(x_train, y_train, x_test, y_test)
-trainSet, testSet = data_ready_knn(x_train2, x_test2)
 
-result = nBayes(trainSet, testSet, 1)
 
 ##rate = bayes_rate = sklearn_bayes(trainSet, y_train2.ravel(), testSet, y_test2.ravel())
 ##knn_rate = knn_rate = sklearn_knn(trainSet, y_train2.ravel(), testSet, y_test2.ravel())
 
 
-recog_rate = calcMeasure(result)
-cmat = calcMat(result)
-print(recog_rate.mean())
+##recog_rate = calcMeasure(result)
+##print(recog_rate.mean())
+##cmat = calcMat(result)
+
 
 
 
