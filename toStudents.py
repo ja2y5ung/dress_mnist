@@ -10,7 +10,7 @@ import seaborn as sns
 from sklearn import neighbors, datasets
 from matplotlib.colors import ListedColormap
 
-trainNum = 6000
+trainNum = 60000
 testNum = 1000
 
 def init_data():
@@ -50,7 +50,7 @@ def data_ready_knn(trainSet, testSet):
     for i in range(10):
         for j in range(tes):
             testSetf[(i * tes) + j] = testSet[j+(i*tes)].flatten()
-    return trainSetf, testSetf
+    return trainSetf/255.0, testSetf/255.0
 
 # 준비된 사진 보는 함수
 def print_data(data, row, col, data_num):
@@ -117,7 +117,6 @@ def knn2(trainSet, testSet, k):
                     train_z[i * (trainNum//10) : (i+1) * (trainNum//10) ,1],\
                     train_z[i * (trainNum//10) : (i+1) * (trainNum//10) ,2],)
     plt.show()
-
 
 
 def calcMat(result):
@@ -194,7 +193,7 @@ def feat2(trainSet,testSet, mask_size, dx):
 
     #mask1
     mask = np.ones((mask_size,mask_size))
-    mask = mask1 * (1/(mask_size)**2)
+    mask = mask * (1/(mask_size)**2)
 
     tr_result = np.zeros((output,output))
     te_result = np.zeros((output,output))
@@ -228,9 +227,7 @@ def pca(trainSetf, testSetf, k):
     
     cov_z = np.cov(z)
     
-    plt.plot(np.diag(cov_z))
 
-    
     return train_z, test_z
 
 def lda(trainSetf, testSetf, k):
@@ -322,15 +319,17 @@ def sklearn_bayes(x_train, y_train, x_test, y_test):
 
 x_train, y_train, x_test, y_test = init_data()
 x_train2, y_train2, x_test2, y_test2 = data_ready(x_train, y_train, x_test, y_test)
+trainSet, testSet = data_ready_knn(x_train2, x_test2)
 
+knn2(trainSet, testSet, 5)
 
 ##rate = bayes_rate = sklearn_bayes(trainSet, y_train2.ravel(), testSet, y_test2.ravel())
 ##knn_rate = knn_rate = sklearn_knn(trainSet, y_train2.ravel(), testSet, y_test2.ravel())
 
 
-##recog_rate = calcMeasure(result)
-##print(recog_rate.mean())
-##cmat = calcMat(result)
+recog_rate = calcMeasure(result)
+print(recog_rate.mean())
+cmat = calcMat(result)
 
 
 
