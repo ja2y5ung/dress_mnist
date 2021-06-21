@@ -226,7 +226,7 @@ def pca(trainSetf, testSetf, k):
     z = eigen_vec.T[:k] @ trainSetf.T
     
     cov_z = np.cov(z)
-    
+    print(np.round(cov_z,3))
 
     return train_z, test_z
 
@@ -320,16 +320,15 @@ def sklearn_bayes(x_train, y_train, x_test, y_test):
 x_train, y_train, x_test, y_test = init_data()
 x_train2, y_train2, x_test2, y_test2 = data_ready(x_train, y_train, x_test, y_test)
 trainSet, testSet = data_ready_knn(x_train2, x_test2)
-
-knn2(trainSet, testSet, 5)
+trainSetf, testSetf = pca(trainSet, testSet, 10)
 
 ##rate = bayes_rate = sklearn_bayes(trainSet, y_train2.ravel(), testSet, y_test2.ravel())
 ##knn_rate = knn_rate = sklearn_knn(trainSet, y_train2.ravel(), testSet, y_test2.ravel())
 
 
-recog_rate = calcMeasure(result)
-print(recog_rate.mean())
-cmat = calcMat(result)
+##recog_rate = calcMeasure(result)
+##print(recog_rate.mean())
+##cmat = calcMat(result)
 
 
 
