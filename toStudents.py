@@ -9,8 +9,9 @@ import pandas as pd
 import seaborn as sns
 from sklearn import neighbors, datasets
 from matplotlib.colors import ListedColormap
+import cv2
 
-trainNum = 60000
+trainNum = 6000
 testNum = 1000
 
 def init_data():
@@ -322,22 +323,46 @@ def sklearn_bayes(x_train, y_train, x_test, y_test):
     
     return rec_rate
 
+def create_edge_data(trainSet, testSet, val):
+    zeros_tr = np.zeros_like(trainSet)
+    zeros_te = np.zeros_like(testSet)
+    
+
+    for i in range(trainSet.shape[0]):
+        img = np.uint8(trainSet[i])
+        canny1 = cv2.Canny(img, 10,200)
+        zeros_tr[i] = canny1
+        
+    for j in range(testSet.shape[0]):
+        img = np.uint8(testSet[j])
+        canny1 = cv2.Canny(img, 100,200)
+        zeros_te[j] = canny1
+
+    return zeros_tr, zeros_te
+
+    
+
 ################################## main ################################
 
 x_train, y_train, x_test, y_test = init_data()
 x_train2, y_train2, x_test2, y_test2 = data_ready(x_train, y_train, x_test, y_test)
-trainSet, testSet = data_ready_knn(x_train2, x_test2)
-trainSetf, testSetf = lda(trainSet, testSet, 784)
-result = knn(trainSetf, testSetf , 5)
+train_edge, test_edge = create_edge_data(x_train2, x_test2, 2)
 
+
+
+##fig = plt.figure()
+##for i in range(1,3):
+##    ax = fig.add_subplot(2,1,i)
+##    plt.imshow(train_edge[i])
+##plt.show()
 
 ##rate = bayes_rate = sklearn_bayes(trainSet, y_train2.ravel(), testSet, y_test2.ravel())
 ##knn_rate = sklearn_knn(trainSet, y_train2.ravel(), testSet, y_test2.ravel())
 
 
-recog_rate = calcMeasure(result)
-print(recog_rate)
-cmat = calcMat(result)
+##recog_rate = calcMeasure(result)
+##print(recog_rate)
+##cmat = calcMat(result)
 
 
 
