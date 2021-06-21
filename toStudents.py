@@ -320,7 +320,6 @@ def sklearn_bayes(x_train, y_train, x_test, y_test):
 x_train, y_train, x_test, y_test = init_data()
 x_train2, y_train2, x_test2, y_test2 = data_ready(x_train, y_train, x_test, y_test)
 trainSet, testSet = data_ready_knn(x_train2, x_test2)
-<<<<<<< Updated upstream
 trainSetf, testSetf = pca(trainSet, testSet, 10)
 
 ##rate = bayes_rate = sklearn_bayes(trainSet, y_train2.ravel(), testSet, y_test2.ravel())
