@@ -10,7 +10,7 @@ import seaborn as sns
 from sklearn import neighbors, datasets
 from matplotlib.colors import ListedColormap
 
-trainNum = 6000
+trainNum = 60000
 testNum = 1000
 
 def init_data():
@@ -224,10 +224,17 @@ def pca(trainSetf, testSetf, k):
     test_z = (eigen_vec.T[:k] @ testSetf.T).T   #2 x 784 @ 784 x 1000
 
     z = eigen_vec.T[:k] @ trainSetf.T
-    
     cov_z = np.cov(z)
-    print(np.round(cov_z,3))
 
+    x_label = np.arange(len(cov_z))+1
+
+    gamma_sum = np.diag(cov_z).sum()
+    rate = np.diag(cov_z)/gamma_sum
+
+
+##    plt.plot(x_label, rate)
+##    plt.show()
+        
     return train_z, test_z
 
 def lda(trainSetf, testSetf, k):
@@ -320,15 +327,17 @@ def sklearn_bayes(x_train, y_train, x_test, y_test):
 x_train, y_train, x_test, y_test = init_data()
 x_train2, y_train2, x_test2, y_test2 = data_ready(x_train, y_train, x_test, y_test)
 trainSet, testSet = data_ready_knn(x_train2, x_test2)
-trainSetf, testSetf = pca(trainSet, testSet, 10)
+trainSetf, testSetf = lda(trainSet, testSet, 784)
+result = knn(trainSetf, testSetf , 5)
+
 
 ##rate = bayes_rate = sklearn_bayes(trainSet, y_train2.ravel(), testSet, y_test2.ravel())
-##knn_rate = knn_rate = sklearn_knn(trainSet, y_train2.ravel(), testSet, y_test2.ravel())
+##knn_rate = sklearn_knn(trainSet, y_train2.ravel(), testSet, y_test2.ravel())
 
 
-##recog_rate = calcMeasure(result)
-##print(recog_rate.mean())
-##cmat = calcMat(result)
+recog_rate = calcMeasure(result)
+print(recog_rate)
+cmat = calcMat(result)
 
 
 
