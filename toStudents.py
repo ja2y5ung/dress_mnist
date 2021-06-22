@@ -39,11 +39,11 @@ def data_ready(x_train, y_train, x_test, y_test):
     return x_train2, y_train2, x_test2, y_test2
 
 def data_ready_knn(trainSet, testSet):
-    trs = trainNum // 10
-    tes = testNum // 10
-    
-    trainSetf = np.zeros((trainNum, 28*28))
-    testSetf = np.zeros((testNum, 28*28))
+    trs = len(trainSet) // 10
+    tes = len(testSet) // 10
+
+    trainSetf = np.zeros((len(trainSet), 28*28))
+    testSetf = np.zeros((len(testSet), 28*28))
     for i in range(10):
         for j in range(trs):
             trainSetf[(i * trs) + j] = trainSet[j+(i*trs)].flatten()
@@ -62,15 +62,15 @@ def print_data(data, row, col, data_num):
         plt.imshow(data[i+data_num])
     plt.show()
 
-def createTmpl(trainSet):
-    tmpl = np.zeros((28,28*10))
-    for i in range(10):
+def createTmpl(trainSet,label=[]):
+    tmpl = np.zeros((28,28*len(label)))
+    for i in range(len(label)):
         imsi = trainSet[(trainNum//10)*i : (trainNum//10)*i+(trainNum//10)]
         tmpl[:,i*28:(i+1)*28] = np.mean(imsi, axis = 0)
     return tmpl
 
-def tmplMatch(tmpl, testSet):
-    result = np.zeros((testNum//10,10)) #100 x 10
+def tmplMatch(tmpl, testSet, label=[]):
+    result = np.zeros((testNum//10, len(label))) #100 x 10
     for i in range(10): # 10
         for j in range(testNum//10): # 1000
             imsiTest = np.tile(testSet[j+i*(testNum//10)], (1,10))
@@ -83,6 +83,27 @@ def tmplMatch(tmpl, testSet):
                         error[:,224:252].sum(), error[:,252:280].sum(),]
             result[j,i] = np.argmin(errorSum)
     return result
+
+def tmplMatch2(tmpl, testSet, label=[]):
+    result = np.zeros((len(te_cloth)//10, len(label))) #100 x 10
+
+    for i in range(len(label)): # 10
+        for j in range(len(testSet)//10): # 1000
+
+            imsiTest = np.tile(testSet[j+i*len(testSet)//10], (1,6))
+
+            error = np.abs(tmpl - imsiTest) #6000x28x28
+            errorSum = [error[:,0:28].sum(), error[:,28:56].sum(),\
+                        error[:,56:84].sum(), error[:,84:112].sum(),\
+                        error[:,112:140].sum(), error[:,140:168].sum(),\
+                        error[:,168:196].sum(), error[:,196:224].sum(),\
+                        error[:,224:252].sum(), error[:,252:280].sum(),]
+        
+            result[j,i] = np.argmin(errorSum)
+
+    return result
+
+
 
 def knn(trainSet, testSet, k): 
     trS1,trS2 = trainSet.shape # 6000, 784
@@ -101,7 +122,28 @@ def knn(trainSet, testSet, k):
         result[i%teS3, i//teS3] = np.argmax(hist) 
     return result
 
-def knn2(trainSet, testSet, k):
+def knn2(trainSet, testSet, tr_label, k): 
+    trS1,trS2 = trainSet.shape # 6000, 784
+    teS1,teS2 = testSet.shape # 1000, 784
+
+    trS3 = int(trS1/10) # 600
+    teS3 = int(teS1/10) # 100
+
+    label = np.tile(tr_label, (teS3,1)) 
+    result = np.zeros((teS3,len(tr_label)))
+
+    for i in range(len(tr_label)):
+        for j in range(teS1//10):
+            imsi = np.sum((trainSet - testSet[i*(testNum//10)+j])**2,axis=1) 
+            no = np.argsort(imsi)[0:k] 
+            hist, bins = np.histogram(no//trS3, np.arange(-0.5,len(tr_label)+0.5,1))
+            result[j , i] = tr_label[np.argmax(hist)]
+
+    return result
+
+
+
+def knn3(trainSet, testSet, k):
 
     # 3D
     cov_mat = np.cov(trainSet.T) #784 x 784 
@@ -135,6 +177,22 @@ def calcMat(result):
     sns.heatmap(cm, annot = True)
     plt.show()
 
+def calcMat2(result,tr_label):
+    label = np.tile(tr_label,(60,1))
+    bound = np.arange(-0.5, len(tr_label)+0.5, 1)
+    
+    cMat = np.zeros((len(tr_label),len(tr_label)))
+
+    for i in range(len(tr_label)):
+        hist, bins = np.histogram(result[:,i], bound)
+        cMat[i,:] = hist
+
+    cm = pd.DataFrame(cMat, index = [i for i in range(1,len(tr_label)+1)],\
+                      columns = [i for i in range(1,len(tr_label)+1)])
+
+    
+    sns.heatmap(cm, annot = True)
+    plt.show()
 
 def calcMeasure(result):
 
@@ -157,7 +215,32 @@ def calcMeasure(result):
     f1 = 2*pre*rec/(pre+rec)
     recog_rate = TP/100
     
+    return recog_rate
 
+def calcMeasure2(result, tr_label):
+
+    label = np.tile(tr_label, (len(result),1))
+    conf_mat = np.zeros((len(tr_label),len(tr_label)))
+    TP = []; TN = []; FN = []; FP = []
+
+    for i in range(len(tr_label)):
+        TP.append(((result == label) & (label == i)).sum())
+        TN.append(((result != i) & (label != i)).sum())
+        FP.append(((result != label) & (label == i)).sum())
+        FN.append(((result == i) & (label != i)).sum())
+        
+        conf_mat[i,i] = ((result == label) & (label == i)).sum()
+    
+    print(conf_mat)
+    TP = np.array(TP); TN = np.array(TN); FP = np.array(FP); FN = np.array(FN);
+    acc = (TP + TN)/(TP + TN + FP + FN)
+    pre = TP/(TP + FP)
+    rec = TP/(TP + FN)
+    f1 = 2*pre*rec/(pre+rec)
+    recog_rate = TP/60
+
+    
+    
     return recog_rate
 
 def feat1(trainSet, testSet):
@@ -295,7 +378,7 @@ def nBayes(trainSet, testSet, case):
 
     return result
 
-def sklearn_knn(x_train, y_train,x_test, y_test):
+def sklearn_knn(x_train, y_train, x_test, y_test):
     knn = KNeighborsClassifier(n_neighbors=5, n_jobs=-1)
     knn.fit(x_train, y_train)
 
@@ -307,6 +390,8 @@ def sklearn_knn(x_train, y_train,x_test, y_test):
     rec_rate = np.diag(cm)/100
     plt.show()    
 
+
+    
     return rec_rate
 
 def sklearn_bayes(x_train, y_train, x_test, y_test):
@@ -320,50 +405,149 @@ def sklearn_bayes(x_train, y_train, x_test, y_test):
     cm = confusion_matrix(y_test, pred)
     rec_rate = np.diag(cm)/100
     plt.show()
+
+
     
     return rec_rate
 
-def create_edge_data(trainSet, testSet, val):
+def create_threshold_data(trainSet, testSet, val):
     zeros_tr = np.zeros_like(trainSet)
     zeros_te = np.zeros_like(testSet)
     
 
     for i in range(trainSet.shape[0]):
         img = np.uint8(trainSet[i])
-        canny1 = cv2.Canny(img, 10,200)
-        zeros_tr[i] = canny1
+
+        ret, thr1 = cv2.threshold(img, 8, 255, cv2.THRESH_BINARY)
+        zeros_tr[i] = thr1
         
     for j in range(testSet.shape[0]):
-        img = np.uint8(testSet[j])
-        canny1 = cv2.Canny(img, 100,200)
-        zeros_te[j] = canny1
+        img2 = np.uint8(testSet[j])
+
+        ret, thr2 = cv2.threshold(img2, 8, 255, cv2.THRESH_BINARY)
+        zeros_te[j] = thr2
 
     return zeros_tr, zeros_te
 
+def group_classification(train, test):
+    train_list = [0 for i in range(10)]
+    test_list = [0 for i in range(10)]
     
+        
+    for i in range(10):
+        cnt_shoe, cnt_cloth = 0, 0
+        for j in range(trainNum//10):        
+            x, y = np.where(train[i*(trainNum//10)+j][:10,11:17]==0)
+            if len(x) > 25:
+                cnt_shoe += 1
+            else:
+                cnt_cloth += 1
+        if cnt_shoe < cnt_cloth:
+            train_list[i] = 1
 
+    for i in range(10):
+        cnt_shoe, cnt_cloth = 0, 0
+        for j in range(testNum//10):        
+            x, y = np.where(test[i*(testNum//10)+j][:10,11:17]==0)
+            if len(x) > 25:
+                cnt_shoe += 1
+            else:
+                cnt_cloth += 1
+        if cnt_shoe < cnt_cloth:
+            test_list[i] = 1    
+            
+    return train_list, test_list
+        
+def data_classification(train_list, test_list, x_train, y_train):
+    cnt1,cnt2,cnt3,cnt4 = 0,0,0,0
+    tr_clo_zeros = np.zeros((train_list.count(1)*trainNum//10,28,28))
+    tr_shoe_zeros = np.zeros((train_list.count(0)*trainNum//10,28,28))
+
+    te_clo_zeros = np.zeros((test_list.count(1)*testNum//10,28,28))
+    te_shoe_zeros = np.zeros((test_list.count(0)*testNum//10,28,28))
+
+
+
+    tr_clo_label, tr_shoe_label, te_clo_label, te_shoe_label = [],[],[],[]
+
+    for i in range(len(train_list)):
+        if train_list[i] == 1:
+            tr_clo_label.append(i)
+            for j in range(trainNum//10):
+                tr_clo_zeros[cnt1] = x_train[i*(trainNum//10)+j]
+                cnt1+=1
+        elif train_list[i] == 0:
+            tr_shoe_label.append(i)
+            for j in range(trainNum//10):
+                tr_shoe_zeros[cnt2] = x_train[i*(trainNum//10)+j]
+                cnt2+=1            
+
+    for i in range(len(test_list)):
+        if test_list[i] == 1:
+            te_clo_label.append(i)
+            for j in range(testNum//10):
+                te_clo_zeros[cnt3] = y_train[i*(testNum//10)+j]
+                cnt3+=1
+        elif test_list[i] == 0:
+            te_shoe_label.append(i)
+            for j in range(testNum//10):
+                te_shoe_zeros[cnt4] = y_train[i*(testNum//10)+j]
+                cnt4+=1   
+   
+
+    zeros1 = np.array([])
+    zeros2 = np.array([])
+    zeros3 = np.array([])
+    zeros4 = np.array([])
+    
+    for i in range(len(tr_clo_label)):
+        label1 = np.full(trainNum//10, tr_clo_label[i])
+        zeros1 = np.hstack((zeros1, label1))
+
+    for j in range(len(tr_shoe_label)):
+        label2 = np.full(trainNum//10, tr_shoe_label[j])
+        zeros2 = np.hstack((zeros2, label2))
+
+    for k in range(len(te_clo_label)):
+        label3 = np.full(testNum//10, te_clo_label[k])
+        zeros3 = np.hstack((zeros3, label3))
+
+    for l in range(len(te_shoe_label)):
+        label4 = np.full(testNum//10, te_shoe_label[l])
+        zeros4 = np.hstack((zeros4, label4))
+
+
+    return tr_clo_zeros, tr_shoe_zeros, te_clo_zeros, te_shoe_zeros,\
+           zeros1, zeros2, zeros3, zeros4
+    
 ################################## main ################################
 
 x_train, y_train, x_test, y_test = init_data()
 x_train2, y_train2, x_test2, y_test2 = data_ready(x_train, y_train, x_test, y_test)
-train_edge, test_edge = create_edge_data(x_train2, x_test2, 2)
+train_th, test_th = create_threshold_data(x_train2, x_test2, 2)
 
 
 
-##fig = plt.figure()
-##for i in range(1,3):
-##    ax = fig.add_subplot(2,1,i)
-##    plt.imshow(train_edge[i])
-##plt.show()
+train_list, test_list = group_classification(train_th, test_th)
+tr_cloth, tr_shoes, te_cloth, te_shoes,\
+          tr_clo_label, tr_shoe_label, te_clo_label, te_shoe_label = \
+          data_classification(train_list, test_list , x_train2, x_test2)
 
-##rate = bayes_rate = sklearn_bayes(trainSet, y_train2.ravel(), testSet, y_test2.ravel())
-##knn_rate = sklearn_knn(trainSet, y_train2.ravel(), testSet, y_test2.ravel())
+##tmpl = createTmpl(tr_cloth,tr_clo_label)
+##result = tmplMatch2(tmpl, te_cloth, tr_clo_label)
+
+trainSet, testSet = data_ready_knn(tr_shoes, te_shoes)
+##trainSet, testSet = data_ready_knn(tr_cloth, te_cloth)
 
 
-##recog_rate = calcMeasure(result)
+knn_rate = sklearn_knn(trainSet, tr_shoe_label.ravel(), testSet, te_shoe_label.ravel())
+##knn_rate = sklearn_knn(trainSet, tr_clo_label.ravel(), testSet, te_clo_label.ravel())
+
+
+
+##recog_rate = calcMeasure2(result, tr_clo_label)
 ##print(recog_rate)
-##cmat = calcMat(result)
-
+##cmat = calcMat2(result, tr_clo_label)
 
 
 
