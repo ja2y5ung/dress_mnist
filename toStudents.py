@@ -11,7 +11,7 @@ from sklearn import neighbors, datasets
 from matplotlib.colors import ListedColormap
 import cv2
 
-trainNum = 6000
+trainNum = 60000
 testNum = 1000
 
 def init_data():
@@ -378,8 +378,8 @@ def nBayes(trainSet, testSet, case):
 
     return result
 
-def sklearn_knn(x_train, y_train, x_test, y_test):
-    knn = KNeighborsClassifier(n_neighbors=5, n_jobs=-1)
+def sklearn_knn(x_train, y_train, x_test, y_test, k):
+    knn = KNeighborsClassifier(n_neighbors=k, n_jobs=-1)
     knn.fit(x_train, y_train)
 
     pred = knn.predict(testSet)
@@ -524,30 +524,39 @@ def data_classification(train_list, test_list, x_train, y_train):
 
 x_train, y_train, x_test, y_test = init_data()
 x_train2, y_train2, x_test2, y_test2 = data_ready(x_train, y_train, x_test, y_test)
-train_th, test_th = create_threshold_data(x_train2, x_test2, 2)
-
-
-
-train_list, test_list = group_classification(train_th, test_th)
-tr_cloth, tr_shoes, te_cloth, te_shoes,\
-          tr_clo_label, tr_shoe_label, te_clo_label, te_shoe_label = \
-          data_classification(train_list, test_list , x_train2, x_test2)
-
-##tmpl = createTmpl(tr_cloth,tr_clo_label)
-##result = tmplMatch2(tmpl, te_cloth, tr_clo_label)
-
-trainSet, testSet = data_ready_knn(tr_shoes, te_shoes)
-##trainSet, testSet = data_ready_knn(tr_cloth, te_cloth)
-
-
-knn_rate = sklearn_knn(trainSet, tr_shoe_label.ravel(), testSet, te_shoe_label.ravel())
-##knn_rate = sklearn_knn(trainSet, tr_clo_label.ravel(), testSet, te_clo_label.ravel())
+trainSet, testSet = data_ready_knn(x_train2, x_test2)
+result = knn3(trainSet, testSet, 2)
 
 
 
 ##recog_rate = calcMeasure2(result, tr_clo_label)
 ##print(recog_rate)
 ##cmat = calcMat2(result, tr_clo_label)
+
+
+##======================   =============================
+##train_th, test_th = create_threshold_data(x_train2, x_test2, 2)
+##======================   =============================
+##train_list, test_list = group_classification(train_th, test_th)
+##tr_cloth, tr_shoes, te_cloth, te_shoes,\
+##          tr_clo_label, tr_shoe_label, te_clo_label, te_shoe_label = \
+##          data_classification(train_list, test_list , x_train2, x_test2)
+##
+##tmpl = createTmpl(tr_cloth,tr_clo_label)
+##result = tmplMatch2(tmpl, te_cloth, tr_clo_label)
+##
+### A section
+##trainSet, testSet = data_ready_knn(tr_shoes, te_shoes)
+##knn_rate = sklearn_knn(trainSet, tr_shoe_label.ravel(), testSet,\
+##                       te_shoe_label.ravel(),15)
+##
+### B section
+##trainSet, testSet = data_ready_knn(tr_cloth, te_cloth)
+##knn_rate = sklearn_knn(trainSet, tr_clo_label.ravel(), testSet,\
+##                       te_clo_label.ravel(), 15)
+##===================================================================
+
+
 
 
 
